@@ -10,8 +10,10 @@
 #define BUFFER_SIZE 1024
 
 #define UE_ID 1
-#define MESSAGE_ID 100
+#define RRC_MESSAGE_ID 100
+#define MID_MESSAGE_ID 1
 
+//MIB
 typedef struct {
     int message_id;
     int sfn;
@@ -65,20 +67,6 @@ void* receive_mib(void* arg) {
 
     while (1) {
 
-        // Receive MIB message from server
-        if (recvfrom(sock, &mib_message, sizeof(mib_message), 0, (struct sockaddr*)&server_addr, &addr_len) < 0) {
-            perror("recvfrom failed");
-            close(sock);
-            exit(EXIT_FAILURE);
-        }else{
-            // Update SFN from received MIB message
-            if (mib_message.message_id == 100) {
-                int received_sfn = mib_message.sfn;
-                printf("Received MIB: message id = %d, updated SFN = %d\n", mib_message.message_id, received_sfn);
-            }
-            sfn = mib_message.sfn; //synchronize sfn
-        }
-
         //receive rrc paging 
         if(recvfrom(sock, &rrc_paging, sizeof(rrc_paging), 0, (struct sockaddr*)&server_addr, &addr_len) < 0){
             perror("recv rrc paging failed");
@@ -86,17 +74,24 @@ void* receive_mib(void* arg) {
             exit(EXIT_FAILURE);
         }
         else{
-            
-            if (rrc_paging.message_id == MESSAGE_ID && rrc_paging.ue_id == UE_ID  ) {
-                printf("Receive RRC success\n");
-
-                
+            if (rrc_paging.message_id == RRC_MESSAGE_ID && rrc_paging.ue_id == UE_ID  ) {
+                printf("Receive RRC success\n");   
             }
         }
-        
 
-       
-
+        // Receive MIB message from server
+        if (recvfrom(sock, &mib_message, sizeof(mib_message), 0, (struct sockaddr*)&server_addr, &addr_len) < 0) {
+            perror("recvfrom failed");
+            close(sock);
+            exit(EXIT_FAILURE);
+        }else{
+            // Update SFN from received MIB message
+            if (mib_message.message_id == MID_MESSAGE_ID) {
+                int received_sfn = mib_message.sfn;
+                printf("Received MIB: message id = %d, updated SFN = %d\n", mib_message.message_id, received_sfn);
+            }
+            sfn = mib_message.sfn; //synchronize sfn
+        }
         
     }
 
