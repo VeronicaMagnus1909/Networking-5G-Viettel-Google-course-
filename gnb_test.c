@@ -10,9 +10,9 @@
 #define BROADCAST_PORT 5000
 #define BROADCAST_IP "255.255.255.255"
 #define BUFFER_SIZE 1024
-#define MESSAGE_ID 100
+#define RRC_MESSAGE_ID 100
 #define UE_ID 1
-#define MESSAGE_ID_MIB 100
+#define MID_MESSAGE_ID 1
 
 // Define for DRX cycle and paging
 #define SERVER_PORT 6000
@@ -60,7 +60,7 @@ int enqueueTMSI(int quid, int ueid_temp) {
 int dequeueTMSI(int sfn, int* pagingRecordList) {
     // Placeholder logic
     // Fill pagingRecordList with UE IDs and return the count
-    return 1; // Replace with actual count
+    return -1; // Replace with actual count
 }
 
 
@@ -115,9 +115,8 @@ void* broadcast_mib(void* arg) {
     //start paging
     if (queueSize[SFN_temp] > 0) {
         memset(&rrc_paging, 0, sizeof(rrc_paging));
-        int count = dequeueTMSI(SFN_temp, rrc_paging.pagingRecordList);
-        if (count > 0) {
-            rrc_paging.message_id = MESSAGE_ID;
+         
+            rrc_paging.message_id = RRC_MESSAGE_ID;
             rrc_paging.ue_id = UE_ID;
             //rrc_paging.message_id = 
             // Send RRC Paging message via broadcast
@@ -126,18 +125,20 @@ void* broadcast_mib(void* arg) {
                 close(sock);
                 exit(EXIT_FAILURE);
             }
-
-            printf("[SFN = %d] Broadcasted RRC Paging: message_id = %d, UEs count = %d\n", SFN_temp, rrc_paging.message_id, count);
-            for (int i = 0; i < count; i++) {
-                printf("\t\tUE ID: %d\n", rrc_paging.pagingRecordList[i]);
+            else{
+                printf("[SFN = %d] Broadcasted RRC Paging: message_id = %d,\n", SFN_temp, rrc_paging.message_id);
             }
-        }
+
+            
+            
+            
+        
     }
 
     // Only broadcast when SFN is divisible by 8
     if (sfn % 8 == 0) {
         // Create MIB message with current SFN
-        mib_message.message_id = MESSAGE_ID;
+        mib_message.message_id = MID_MESSAGE_ID;
         mib_message.sfn = sfn;
 
         // Send broadcast message (send the entire struct)
